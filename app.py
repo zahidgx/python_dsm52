@@ -3,6 +3,7 @@ from config import db, migrate
 from dotenv import load_dotenv
 import os
 from routes.user import user_bp
+from flask_cors import CORS
 
 load_dotenv()
 
