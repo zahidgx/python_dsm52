@@ -1,64 +1,65 @@
 from models.User import User
 from flask import jsonify
 from config import db
+from flask_jwt_extended import create_access_token
 
+# Función para obtener todos los usuarios
 def get_all_users():
-    try:
-        users = [user.to_dict() for user in User.query.all()]
-        return users  
-    except Exception as error:
-        print(f"ERROR al obtener usuarios: {error}")
-        return {"error": "Error al obtener los usuarios"}, 500
+    users = User.query.all()
+    return [{"id": user.id, "name": user.name, "email": user.email, "last_name": user.last_name, "password":user.password} for user in users]
 
+# Función para obtener un usuario por ID
+def get_user_by_id(user_id):
+    user = User.query.get(user_id)
+    if user:
+        return {"id": user.id, "name": user.name, "email": user.email, "last_name": user.last_name, "password":user.password}
+    return None
 
-def create_user(name, email, last_name):
-    try:
-        if User.query.filter_by(email=email).first():
-            return jsonify({"error": "El correo electrónico ya está en uso"}), 400
-        new_user = User(name, email, last_name)
-        db.session.add(new_user)
+# Función para crear un nuevo usuario
+def create_user(name, email, last_name, password):
+    new_user = User(name=name, email=email, last_name=last_name, password=password)
+    db.session.add(new_user)
+    db.session.commit()
+    return {"id": new_user.id, "name": new_user.name, "email": new_user.email, "last_name": new_user.last_name, "password":new_user.password}
+
+# Función para actualizar un usuario
+def update_user(user_id, name, email, last_name, password):
+    user = User.query.get(user_id)
+    if user:
+        user.name = name
+        user.email = email
+        user.last_name = last_name
+        user.password = password
         db.session.commit()
-        
-        return jsonify(new_user.to_dict()), 201
-    except Exception as e:
-        print(f"ERROR al crear usuario: {e}")
-        return jsonify({"error": "Error al crear usuario"}), 500
+        return {"id": user.id, "name": user.name, "email": user.email, "last_name": user.last_name, "password":user.password}
+    return None
 
-
-def update_user(user_id, name=None, email=None, last_name=None): 
-    try:
-        user = User.query.get(user_id)
-        
-        if not user:
-            return jsonify({"error": "Usuario no encontrado"}), 404
-
-        if name:
-            user.name = name
-        if email:
-            user.email = email
-        if last_name: 
-            user.last_name = last_name
-
-        db.session.commit()
-        return jsonify(user.to_dict())
-    except Exception as e:
-        
-        print(f"ERROR al actualizar usuario: {e}")
-        return jsonify({"error": "Error al actualizar usuario"}), 500
-
-
+# Función para eliminar un usuario
 def delete_user(user_id):
-    try:
-        
-        user = User.query.get(user_id)
-        
-        if not user:
-            return jsonify({"error": "Usuario no encontrado"}), 404
-
+    user = User.query.get(user_id)
+    if user:
         db.session.delete(user)
         db.session.commit()
+        return {"message": "User deleted successfully"}
+    return None
 
-        return jsonify({"message": "Usuario eliminado"}), 200
-    except Exception as e:
-        print(f"ERROR al eliminar usuario: {e}")
-        return jsonify({"error": "Error al eliminar usuario"}), 500
+def login_user(email, password):
+    user = User.query.filter_by(email = email).first()
+    
+    if user and user.check_password(password):
+        access_token = create_access_token(identity=user.id)
+        return jsonify({
+            'access_token': access_token,
+            'user' : {
+                "id" : user.id,
+                "name" : user.name,
+                "email" : user.email,
+                "last_name" : user.last_name,
+            }
+        })
+    return jsonify ({ "msg" : "Credenciales invalidas"}), 401
+
+
+        
+
+
