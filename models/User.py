@@ -13,12 +13,14 @@ class User(db.Model):
         self.name = name
         self.email = email
         self.last_name = last_name
-        self.password = generate_password_hash(password)
+        self.password = generate_password_hash(password)  # Generamos el hash de la contraseña en el __init__
 
-    def check_password (self, password):
-        return check_password_hash(self.password,password)
+    def check_password(self, password):
+        """Verifica si la contraseña proporcionada es correcta"""
+        return check_password_hash(self.password, password)
 
     def to_dict(self):
+        """Devuelve un diccionario con los campos del usuario, excluyendo la contraseña"""
         return {
             "id": self.id,
             "name": self.name,

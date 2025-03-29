@@ -62,4 +62,3 @@ def login():
     data = request.get_json()
     return login_user(data['email'], data['password'])
 
-
